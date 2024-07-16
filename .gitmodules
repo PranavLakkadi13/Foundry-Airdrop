@@ -7,3 +7,6 @@
 [submodule "lib/forge-std"]
   path = lib/forge-std
   url = https://github.com/PranavLakkadi13/Foundry-Airdrop.git
+[submodule "lib/foundry-devops"]
+	path = lib/foundry-devops
+	url = https://github.com/cyfrin/foundry-devops

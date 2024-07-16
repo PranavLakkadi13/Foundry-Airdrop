@@ -48,7 +48,7 @@ contract MerkleAirdrop {
         //        leaf that produces the same hash , but anyhow keccak is secure enough to prevent this but we
         //        are doing it as a practice that we follow
         bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(account, amount))));
-        if (MerkleProof.verify(merkleProof, i_merkleRoot, leaf)) {
+        if (!MerkleProof.verify(merkleProof, i_merkleRoot, leaf)) {
             revert MerkleAirdrop__ClaimFailedInvalidProof();
         }
         s_claimed[account] = true;

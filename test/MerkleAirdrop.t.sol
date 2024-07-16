@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Test,console} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 import {MerkleAirdrop} from "../src/Merkle-Airdrop.sol";
 import {PranavCoin} from "../src/PranavCoin.sol";
 import {console} from "../lib/forge-std/src/console.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ZkSyncChainChecker} from "../lib/foundry-devops/src/ZkSyncChainChecker.sol";
+import {DeployMerkleAirdrop} from "../script/DeployMerkleAirdrop.sol";
 
-contract MerkleAirdropTest is Test {
+contract MerkleAirdropTest is Test,ZkSyncChainChecker {
     MerkleAirdrop private airdrop;
     PranavCoin private token;
 
@@ -20,12 +23,17 @@ contract MerkleAirdropTest is Test {
     bytes32[] PROOF = [proofOne, proofTwo];
     address user;
     uint256 userPrivKey;
-    address test = makeAddr("test");
 
     function setUp() public {
+        if (!isZkSyncChain()) {
+            DeployMerkleAirdrop deployer = new DeployMerkleAirdrop();
+            (airdrop, token) = deployer.deployMerkleAirdrop();
+        }
+        else {
         token = new PranavCoin();
-        airdrop = new MerkleAirdrop(ROOT, token);
-        token.mint(address(airdrop),AmountToMint );
+        airdrop = new MerkleAirdrop(ROOT, IERC20(address(token)));
+        token.mint(address(airdrop), AmountToMint);
+        }
         (user, userPrivKey) = makeAddrAndKey("user");
     }
 
@@ -33,9 +41,11 @@ contract MerkleAirdropTest is Test {
         uint256 startBalance = token.balanceOf(user);
 
         vm.prank(user);
-        airdrop.claim(PROOF, user, AmountToClaim);
-
+        //        "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D",
+        //      "25000000000000000000"
+        airdrop.claim(PROOF, address(user), AmountToClaim);
+        //        airdrop.claim(PROOF, 0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D, 25000000000000000000);
         uint256 endBalance = token.balanceOf(user);
-        assert(endBalance == startBalance );
+        assert(endBalance > startBalance);
     }
 }
