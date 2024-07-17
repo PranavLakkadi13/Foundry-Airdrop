@@ -38,7 +38,7 @@ contract MerkleAirdrop {
     //////////// CORE FUNCTIONS //////////////////
     //////////////////////////////////////////////
 
-    function claim(bytes32[] calldata merkleProof, address account, uint256 amount) external {
+    function claimByPermit(bytes32[] calldata merkleProof, address account, uint256 amount) external {
         //        using the account and the amount we can calculate the leaf node (hash)
 
         if (s_claimed[account]) {
@@ -57,11 +57,31 @@ contract MerkleAirdrop {
         SafeERC20.safeTransfer(i_token, account, amount);
     }
 
+
+    function claimSelf(bytes32[] calldata merkleProof, uint256 amount) external {
+        //        using the account and the amount we can calculate the leaf node (hash)
+
+        if (s_claimed[msg.sender]) {
+            revert MerkleAirdrop__AlreadyClaimed();
+        }
+        //        here we are hashing the leaf twice to prevent it from pre image attack if ever their is another
+        //        leaf that produces the same hash , but anyhow keccak is secure enough to prevent this but we
+        //        are doing it as a practice that we follow
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, amount))));
+        if (!MerkleProof.verify(merkleProof, i_merkleRoot, leaf)) {
+            revert MerkleAirdrop__ClaimFailedInvalidProof();
+        }
+        s_claimed[msg.sender] = true;
+
+        emit AirdropClaim(msg.sender, amount);
+        SafeERC20.safeTransfer(i_token, msg.sender, amount);
+    }
+
     //////////////////////////////////////////////
     //////////// GETTER FUNCTIONS ////////////////
     //////////////////////////////////////////////
 
-    function ClaimedAirdrop(address account) external view returns (bool) {
+    function claimedAirdrop(address account) external view returns (bool) {
         return s_claimed[account];
     }
 
@@ -69,7 +89,7 @@ contract MerkleAirdrop {
         return i_merkleRoot;
     }
 
-    function getToken() external view returns (IERC20) {
-        return i_token;
+    function getToken() external view returns (address) {
+        return address(i_token);
     }
 }

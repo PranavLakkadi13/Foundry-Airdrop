@@ -7,7 +7,7 @@ import {PranavCoin} from "../src/PranavCoin.sol";
 import {console} from "../lib/forge-std/src/console.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ZkSyncChainChecker} from "../lib/foundry-devops/src/ZkSyncChainChecker.sol";
-import {DeployMerkleAirdrop} from "../script/DeployMerkleAirdrop.sol";
+import {DeployMerkleAirdrop} from "../script/DeployMerkleAirdrop.s.sol";
 
 contract MerkleAirdropTest is Test,ZkSyncChainChecker {
     MerkleAirdrop private airdrop;
@@ -43,7 +43,7 @@ contract MerkleAirdropTest is Test,ZkSyncChainChecker {
         vm.prank(user);
         //        "0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D",
         //      "25000000000000000000"
-        airdrop.claim(PROOF, address(user), AmountToClaim);
+        airdrop.claimSelf(PROOF, AmountToClaim);
         //        airdrop.claim(PROOF, 0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D, 25000000000000000000);
         uint256 endBalance = token.balanceOf(user);
         assert(endBalance > startBalance);
