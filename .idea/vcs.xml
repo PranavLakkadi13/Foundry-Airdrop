@@ -3,6 +3,8 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/forge-std" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/foundry-devops" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/lib/foundry-devops/lib/forge-std" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/murky" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/murky/lib/forge-std" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/lib/murky/lib/openzeppelin-contracts" vcs="Git" />
