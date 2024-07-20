@@ -4,13 +4,15 @@ pragma solidity ^0.8.0;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /*
 @title MerkleAirdrop
 @notice This contract is used to distribute tokens to a list of addresses using Merkle Proofs
 @author Pranav Lakkadi
 */
-contract MerkleAirdrop {
+contract MerkleAirdrop is EIP712{
     //    List of addresses
     //    Only the address in the list can claim the tokens
     //    address[] public addresses;  ---> This way is too expensive and can cause DOS attacks
@@ -35,7 +37,14 @@ contract MerkleAirdrop {
     IERC20 private immutable i_token;
     mapping(address => bool) public s_claimed;
 
-    constructor(bytes32 merkleRoot, IERC20 token) {
+    bytes32 private constant MESSAGE_TYPEHASH = keccak256("AirDropClaim(address account,uint256 amount)");
+
+    struct AirDropClaim {
+        address account;
+        uint256 amount;
+    }
+
+    constructor(bytes32 merkleRoot, IERC20 token) EIP712("MerkleAirdrop","1") {
         i_merkleRoot = merkleRoot;
         i_token = token;
     }
@@ -63,7 +72,7 @@ contract MerkleAirdrop {
         SafeERC20.safeTransfer(i_token, msg.sender, amount);
     }
 
-    function claimByPermit(
+    function claim_By_Permit(
         bytes32[] calldata merkleProof,
         address account,
         uint256 amount,
@@ -76,7 +85,7 @@ contract MerkleAirdrop {
         }
 
         // check the signature
-        if (!_isValidSignature(account, message, v, r, s)) {
+        if (!_isValidSignature(account, _getMessage(account, amount), v, r, s)) {
             revert MerkleAirdrop__InvalidSignature();
         }
 
@@ -94,7 +103,23 @@ contract MerkleAirdrop {
     //////////// INTERNAL FUNCTIONS //////////////
     //////////////////////////////////////////////
 
-//    function isValidSignature()
+    function _isValidSignature(
+        address account,
+        bytes32 message,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) internal pure returns (bool) {
+        (address signer, ,) = ECDSA.tryRecover(message, v, r, s);
+        return signer == account;
+    }
+
+
+    function _getMessage(address account, uint256 amount) public view returns (bytes32) {
+        return _hashTypedDataV4(
+            keccak256(abi.encode(MESSAGE_TYPEHASH, AirDropClaim({account: account, amount: amount})))
+        );
+    }
 
     //////////////////////////////////////////////
     //////////// GETTER FUNCTIONS ////////////////

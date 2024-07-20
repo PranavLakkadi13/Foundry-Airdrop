@@ -21,7 +21,14 @@ contract MerkleAirdropTest is Test,ZkSyncChainChecker {
     bytes32 proofOne = 0x0fd7c981d39bece61f7499702bf59b3114a90e66b51ba2c53abdf7b62986c00a;
     bytes32 proofTwo = 0xe5ebd1e1b5a5478a944ecab36a9a954ac3b6b8216875f6524caa7a1d87096576;
     bytes32[] PROOF = [proofOne, proofTwo];
+
+
+    bytes32 proofPermitOne = 0xd1445c931158119b00449ffcac3c947d028c0c359c34a6646d95962b3b55c6ad;
+    bytes32 proofPermitTwo = 0xe5ebd1e1b5a5478a944ecab36a9a954ac3b6b8216875f6524caa7a1d87096576;
+    bytes32[] PROOFPERMIT = [proofPermitOne, proofPermitTwo];
+
     address user;
+    address bob;
     uint256 userPrivKey;
 
     function setUp() public {
@@ -35,6 +42,7 @@ contract MerkleAirdropTest is Test,ZkSyncChainChecker {
         token.mint(address(airdrop), AmountToMint);
         }
         (user, userPrivKey) = makeAddrAndKey("user");
+        bob = vm.addr(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80);
     }
 
     function testUsersCanClaim() public {
@@ -46,6 +54,18 @@ contract MerkleAirdropTest is Test,ZkSyncChainChecker {
         airdrop.claimSelf(PROOF, AmountToClaim);
         //        airdrop.claim(PROOF, 0x6CA6d1e2D5347Bfab1d91e883F1915560e09129D, 25000000000000000000);
         uint256 endBalance = token.balanceOf(user);
+        assert(endBalance > startBalance);
+    }
+
+    function testUserCanClaimWithPermit() public {
+        uint256 startBalance = token.balanceOf(bob);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80,airdrop._getMessage(bob, AmountToClaim));
+
+        vm.prank(user);
+        airdrop.claim_By_Permit(PROOFPERMIT, bob, AmountToClaim, v, r, s);
+
+        uint256 endBalance = token.balanceOf(bob);
         assert(endBalance > startBalance);
     }
 }
