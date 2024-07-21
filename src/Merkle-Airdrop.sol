@@ -99,6 +99,32 @@ contract MerkleAirdrop is EIP712{
         SafeERC20.safeTransfer(i_token, account, amount);
     }
 
+
+    function claim_By_Permit_By_Signature(
+        bytes32[] calldata merkleProof,
+        address account,
+        uint256 amount,
+        bytes memory signature
+    ) external {
+        if (s_claimed[account]) {
+            revert MerkleAirdrop__AlreadyClaimed();
+        }
+
+        // check the signature
+        if (!_isValidSignature(account, _getMessage(account, amount), signature)) {
+            revert MerkleAirdrop__InvalidSignature();
+        }
+
+        bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(account, amount))));
+        if (!MerkleProof.verify(merkleProof, i_merkleRoot, leaf)) {
+            revert MerkleAirdrop__ClaimFailedInvalidProof();
+        }
+        s_claimed[account] = true;
+
+        emit AirdropClaim(account, amount);
+        SafeERC20.safeTransfer(i_token, account, amount);
+    }
+
     //////////////////////////////////////////////
     //////////// INTERNAL FUNCTIONS //////////////
     //////////////////////////////////////////////
@@ -111,6 +137,15 @@ contract MerkleAirdrop is EIP712{
         bytes32 s
     ) internal pure returns (bool) {
         (address signer, ,) = ECDSA.tryRecover(message, v, r, s);
+        return signer == account;
+    }
+
+    function _isValidSignature(
+        address account,
+        bytes32 message,
+        bytes memory signature
+    ) internal pure returns (bool) {
+        (address signer, ,) = ECDSA.tryRecover(message, signature);
         return signer == account;
     }
 

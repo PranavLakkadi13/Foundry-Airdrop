@@ -68,4 +68,16 @@ contract MerkleAirdropTest is Test,ZkSyncChainChecker {
         uint256 endBalance = token.balanceOf(bob);
         assert(endBalance > startBalance);
     }
+
+    function testUserCanClaimWithPermitBySignature() public {
+        uint256 startBalance = token.balanceOf(bob);
+
+        bytes memory signature = hex"1fabe6bce5a0b52e2f0c22db537866e2e7ea6d4e2dcc3ae57c975af39b11656873871bfbdf5067eda988e71114b875bfe9d492ce0911fd39273870a79873b28e1c";
+
+        vm.prank(user);
+        airdrop.claim_By_Permit_By_Signature(PROOFPERMIT, address(bob), AmountToClaim, signature);
+
+        uint256 endBalance = token.balanceOf(bob);
+        assert(endBalance > startBalance);
+    }
 }
